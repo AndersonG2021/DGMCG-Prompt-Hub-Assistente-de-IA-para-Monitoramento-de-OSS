@@ -35,13 +35,14 @@ st.markdown("""
     /* Importação de fontes */
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
-    /* Variáveis de cor — identidade visual institucional */
+    /* Variáveis de cor — identidade visual institucional (Pernambuco) */
     :root {
-        --cor-primaria: #003F72;
-        --cor-secundaria: #0078C8;
-        --cor-acento: #00A878;
-        --cor-alerta: #C8450A;
-        --cor-fundo-card: #F4F7FB;
+        --cor-primaria: #0038A8; /* Azul PE */
+        --cor-secundaria: #C8102E; /* Vermelho PE */
+        --cor-acento: #009E60; /* Verde PE */
+        --cor-alerta: #C8102E; /* Vermelho PE */
+        --cor-amarelo: #F1C400; /* Amarelo PE */
+        --cor-fundo-card: #FFFFFF;
         --cor-borda: #D0DCE8;
         --cor-texto: #1A2B3C;
         --cor-texto-leve: #5A7080;
@@ -55,26 +56,33 @@ st.markdown("""
 
     /* Cabeçalho principal */
     .cabecalho-principal {
-        background: linear-gradient(135deg, #003F72 0%, #005FA3 60%, #0078C8 100%);
-        color: white;
+        background: #FFFFFF;
+        color: var(--cor-primaria);
         padding: 2rem 2.5rem;
         border-radius: 12px;
         margin-bottom: 2rem;
-        border-left: 6px solid #00A878;
+        border: 1px solid var(--cor-borda);
+        border-top: 6px solid;
+        border-image: linear-gradient(to right, #0038A8 25%, #FFFFFF 25%, #FFFFFF 35%, #C8102E 35%, #C8102E 65%, #F1C400 65%, #F1C400 85%, #009E60 85%) 1;
+        box-shadow: 0 4px 12px rgba(0, 56, 168, 0.08);
     }
 
     .cabecalho-principal h1 {
-        font-size: 1.6rem;
-        font-weight: 600;
-        margin: 0 0 0.3rem 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
         letter-spacing: -0.02em;
+    }
+    
+    .cabecalho-principal h1 span {
+        color: var(--cor-primaria);
     }
 
     .cabecalho-principal p {
         margin: 0;
-        font-size: 0.95rem;
-        opacity: 0.85;
-        font-weight: 300;
+        font-size: 1rem;
+        color: var(--cor-texto-leve);
+        font-weight: 400;
     }
 
     /* Cards de prompt */
@@ -152,15 +160,15 @@ st.markdown("""
 
     /* Resultado do construtor */
     .resultado-builder {
-        background: #EBF8F4;
-        border: 1px solid #A8DBC9;
+        background: #F4F7FB;
+        border: 1px solid var(--cor-borda);
         border-radius: 10px;
         padding: 1.5rem;
         border-left: 5px solid var(--cor-acento);
     }
 
     .resultado-builder h4 {
-        color: #006B4F;
+        color: var(--cor-acento);
         margin: 0 0 1rem 0;
         font-size: 1rem;
     }
@@ -357,12 +365,14 @@ def renderizar_sidebar():
         # Logotipo / identidade
         st.markdown("""
         <div style="text-align:center; padding: 1rem 0 0.5rem 0;">
-            <div style="font-size:2.2rem;">📋</div>
-            <div style="font-size:0.85rem; font-weight:600; color:#003F72; letter-spacing:0.05em;">
+            <div style="font-size:3rem; font-weight:800; color:#0038A8; letter-spacing:0.05em; margin-bottom: 0.2rem;">
                 DGMCG
             </div>
-            <div style="font-size:0.72rem; color:#5A7080;">
-                Biblioteca de Prompts IA
+            <div style="font-size:0.85rem; font-weight:600; color:#1A2B3C; letter-spacing:0.05em;">
+                GERADOR DE PROMPTS
+            </div>
+            <div style="font-size:0.72rem; color:#5A7080; margin-top: 0.2rem;">
+                Secretaria Estadual de Saúde
             </div>
         </div>
         <hr style="border:none; border-top:1px solid #D0DCE8; margin: 0.8rem 0;">
@@ -393,7 +403,7 @@ def renderizar_sidebar():
         # Informações da aplicação
         st.markdown(f"""
         <div style="font-size:0.75rem; color:#5A7080; line-height:1.8;">
-            <strong style="color:#003F72;">Sobre esta ferramenta</strong><br>
+            <strong style="color:#0038A8;">Sobre esta ferramenta</strong><br>
             Versão: 1.0.0<br>
             Uso interno — DGMCG/SES<br>
             Atualizado: {datetime.now().strftime('%d/%m/%Y')}
@@ -410,7 +420,7 @@ def renderizar_biblioteca():
 
     st.markdown("""
     <div style="margin-bottom:1.5rem;">
-        <h3 style="color:#003F72; margin:0 0 0.3rem 0;">📚 Biblioteca de Prompts</h3>
+        <h3 style="color:#0038A8; margin:0 0 0.3rem 0;">📚 Biblioteca de Prompts</h3>
         <p style="color:#5A7080; font-size:0.9rem; margin:0;">
             Prompts técnicos pré-elaborados para as principais atividades da diretoria.
             Copie, ajuste os placeholders e cole na ferramenta de IA.
@@ -501,7 +511,7 @@ def renderizar_construtor():
 
     st.markdown("""
     <div style="margin-bottom:1.5rem;">
-        <h3 style="color:#003F72; margin:0 0 0.3rem 0;">🛠️ Construtor de Prompts</h3>
+        <h3 style="color:#0038A8; margin:0 0 0.3rem 0;">🛠️ Construtor de Prompts</h3>
         <p style="color:#5A7080; font-size:0.9rem; margin:0;">
             Preencha os campos abaixo para gerar um prompt estruturado e otimizado,
             garantindo que a IA retorne exatamente o que você precisa.
@@ -742,10 +752,10 @@ def main():
     # Cabeçalho principal
     st.markdown("""
     <div class="cabecalho-principal">
-        <h1>📋 Gerador e Biblioteca de Prompts para IA</h1>
+        <h1><span>DGMCG</span> | Gerador de Prompts para IA</h1>
         <p>
-            Diretoria Geral de Monitoramento de Contratos de Gestão · DGMCG / SES
-            &nbsp;|&nbsp; Ferramenta de uso interno para padronização do uso de Inteligência Artificial
+            Diretoria Geral de Monitoramento de Contratos de Gestão · SES/PE
+            <br>Ferramenta de uso interno para padronização do uso de Inteligência Artificial
         </p>
     </div>
     """, unsafe_allow_html=True)
