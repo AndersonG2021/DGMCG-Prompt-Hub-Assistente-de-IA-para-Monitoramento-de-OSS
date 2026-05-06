@@ -5,7 +5,7 @@ Diretoria Geral de Monitoramento de Contratos de Gestão
 Secretaria Estadual de Saúde
 
 Autor: Anderson Guilherme Barbosa Cavalcante
-Versão: 3.0.0
+Versão: 1.0.4
 =============================================================================
 """
 
@@ -431,7 +431,7 @@ def renderizar_sidebar():
         st.markdown(f"""
         <div style="font-size:0.75rem; color:#5A7080; line-height:1.8;">
             <strong style="color:#0038A8;">Sobre esta ferramenta</strong><br>
-            Versão: 1.0.0<br>
+            Versão: 1.0.4<br>
             Uso interno — DGMCG/SES<br>
             Atualizado: {datetime.now().strftime('%d/%m/%Y')}
         </div>
@@ -535,6 +535,46 @@ def _renderizar_card_prompt(prompt: dict):
 # MÓDULO 2: CONSTRUTOR DE PROMPTS (PROMPT BUILDER)
 # =============================================================================
 
+SUGESTOES = {
+    "papel": [
+        "Personalizado (digite abaixo)...",
+        "Aja como um Auditor Sênior em Saúde Pública com 15 anos de experiência em fiscalização de contratos de gestão com OSS.",
+        "Aja como um Analista Financeiro especializado em contas públicas e auditoria do SUS.",
+        "Aja como um Assessor Jurídico-Administrativo especializado em Direito Administrativo Sanitário.",
+        "Aja como um Especialista em Avaliação de Desempenho de Serviços de Saúde, com experiência em indicadores assistenciais do SUS."
+    ],
+    "tarefa": [
+        "Personalizado (digite abaixo)...",
+        "Analise o relatório de prestação de contas da OSS [NOME DA OSS] referente ao mês de [MÊS], identifique inconsistências financeiras e emita um parecer técnico.",
+        "Avalie o cumprimento das metas assistenciais do equipamento [NOME DO EQUIPAMENTO], indicando o percentual de atingimento e possíveis justificativas.",
+        "Redija um Despacho Administrativo formalizando a aprovação da prestação de contas com base nos dados fornecidos.",
+        "Realize o mapeamento do processo descrito e identifique possíveis gargalos e riscos de conformidade."
+    ],
+    "contexto": [
+        "Personalizado (digite abaixo)...",
+        "O equipamento em questão é um Hospital Geral de Média Complexidade com 200 leitos. O contrato de gestão vigente é o de nº [NÚMERO]. O repasse mensal é de R$ [VALOR].",
+        "A OSS tem histórico de atrasos na entrega dos relatórios mensais. Houve autuação do TCE no mês anterior por incompletude de documentos.",
+        "Os dados de produção foram extraídos do sistema SIHD/SUS e do prontuário eletrônico. A meta pactuada foi revisada no último aditivo contratual."
+    ],
+    "restricoes": [
+        "Personalizado (digite abaixo)...",
+        "- Não invente dados financeiros ou valores não fornecidos\n- Não emita opiniões sobre a competência da gestão da OSS\n- Não utilize linguagem informal ou subjetiva\n- Não faça referências a legislação federal sem verificar a aplicabilidade estadual",
+        "- Baseie-se apenas nas informações fornecidas no contexto.\n- Caso falte algum dado essencial, indique a lacuna em vez de presumir.",
+        "- Não cite nomes de pacientes ou dados sensíveis.\n- Mantenha a estrita observância à LGPD e normativas da SES."
+    ],
+    "exemplos": [
+        "Personalizado (digite abaixo)...",
+        "O parecer deve seguir o modelo:\n'Diante da análise realizada, conclui-se que... recomenda-se...'",
+        "Baseie-se nas diretrizes do Manual de Monitoramento de Contratos de Gestão da SES.",
+        "Estruture a análise como a Matriz SWOT (Forças, Fraquezas, Oportunidades, Ameaças)."
+    ]
+}
+
+def aplicar_sugestao(chave_sugestao, chave_texto):
+    sugestao = st.session_state.get(chave_sugestao, "")
+    if sugestao and sugestao != "Personalizado (digite abaixo)...":
+        st.session_state[chave_texto] = sugestao
+
 def renderizar_construtor():
     """Renderiza o módulo interativo de construção de prompts do zero."""
 
@@ -553,6 +593,13 @@ def renderizar_construtor():
 
     with col_esq:
         st.markdown("#### 👤 Passo 1 — Papel / Persona da IA")
+        st.selectbox(
+            "💡 Sugestões rápidas:", 
+            SUGESTOES["papel"], 
+            key="sugestao_papel", 
+            on_change=aplicar_sugestao, 
+            args=("sugestao_papel", "builder_papel")
+        )
         papel = st.text_area(
             label="Defina o papel que a IA deve assumir:",
             placeholder=(
@@ -566,6 +613,13 @@ def renderizar_construtor():
         )
 
         st.markdown("#### 🎯 Passo 2 — Tarefa Principal")
+        st.selectbox(
+            "💡 Sugestões rápidas:", 
+            SUGESTOES["tarefa"], 
+            key="sugestao_tarefa", 
+            on_change=aplicar_sugestao, 
+            args=("sugestao_tarefa", "builder_tarefa")
+        )
         tarefa = st.text_area(
             label="Descreva claramente o que a IA deve fazer:",
             placeholder=(
@@ -579,6 +633,13 @@ def renderizar_construtor():
         )
 
         st.markdown("#### 🗂️ Passo 3 — Contexto e Informações de Fundo")
+        st.selectbox(
+            "💡 Sugestões rápidas:", 
+            SUGESTOES["contexto"], 
+            key="sugestao_contexto", 
+            on_change=aplicar_sugestao, 
+            args=("sugestao_contexto", "builder_contexto")
+        )
         contexto = st.text_area(
             label="Forneça o contexto necessário para a IA entender o problema:",
             placeholder=(
@@ -624,6 +685,13 @@ def renderizar_construtor():
             formato = f"{formato_opcao} — {formato_detalhes.strip()}"
 
         st.markdown("#### 🚫 Passo 5 — Restrições e Limites")
+        st.selectbox(
+            "💡 Sugestões rápidas:", 
+            SUGESTOES["restricoes"], 
+            key="sugestao_restricoes", 
+            on_change=aplicar_sugestao, 
+            args=("sugestao_restricoes", "builder_restricoes")
+        )
         restricoes = st.text_area(
             label="O que a IA NÃO deve fazer:",
             placeholder=(
@@ -639,6 +707,13 @@ def renderizar_construtor():
         )
 
         st.markdown("#### ✨ Opcional — Exemplos ou Referências")
+        st.selectbox(
+            "💡 Sugestões rápidas:", 
+            SUGESTOES["exemplos"], 
+            key="sugestao_exemplos", 
+            on_change=aplicar_sugestao, 
+            args=("sugestao_exemplos", "builder_exemplos")
+        )
         exemplos = st.text_area(
             label="Exemplos de saída desejada ou referências (opcional):",
             placeholder=(
