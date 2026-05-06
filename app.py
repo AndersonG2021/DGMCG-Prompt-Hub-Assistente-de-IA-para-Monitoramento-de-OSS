@@ -382,7 +382,9 @@ def carregar_prompts_customizados():
             })
         return prompts
     except Exception as e:
-        # Em caso de erro (ex: credenciais não configuradas), apenas retorna vazio
+        import traceback
+        st.error(f"Erro silencioso ao carregar planilha: {e}")
+        st.code(traceback.format_exc(), language="python")
         return []
 
 def salvar_prompt_customizado(prompt_dict):
@@ -405,7 +407,10 @@ def salvar_prompt_customizado(prompt_dict):
         # Atualiza a planilha no Google Drive
         conn.update(data=df_atualizado)
     except Exception as e:
+        import traceback
         st.error(f"Erro ao salvar na planilha do Google Sheets: {e}")
+        st.error(f"Detalhes do erro: {repr(e)}")
+        st.code(traceback.format_exc(), language="python")
 
 
 # =============================================================================
