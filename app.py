@@ -16,6 +16,7 @@ import json
 import os
 import uuid
 import pandas as pd
+from streamlit_gsheets import GSheetsConnection
 
 
 # =============================================================================
@@ -357,28 +358,54 @@ Utilize seções numeradas com subtítulos em negrito. Para a estrutura BPMN tex
     },
 ]
 
-ARQUIVO_PROMPTS_CUSTOMIZADOS = "prompts_customizados.xlsx"
-
 def carregar_prompts_customizados():
-    if os.path.exists(ARQUIVO_PROMPTS_CUSTOMIZADOS):
-        try:
-            df = pd.read_excel(ARQUIVO_PROMPTS_CUSTOMIZADOS)
-            df = df.fillna("")
-            return df.to_dict(orient="records")
-        except Exception:
-            return []
-    return []
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        # O ttl=0 garante que sempre lerá o dado mais atual da planilha sem usar cache
+        df = conn.read(ttl=0)
+        df = df.fillna("")
+        
+        # Filtra caso a planilha traga linhas vazias a mais
+        if "ID" in df.columns:
+            df = df[df["ID"] != ""]
+        
+        # O código antigo espera dicionários com chaves em minúsculo
+        # A planilha do Google Sheets tem cabeçalhos em maiúsculo (ID, CATEGORIA, etc.)
+        prompts = []
+        for _, row in df.iterrows():
+            prompts.append({
+                "id": str(row.get("ID", "")),
+                "categoria": str(row.get("CATEGORIA", "")),
+                "titulo": str(row.get("TITULO", "")),
+                "descricao": str(row.get("DESCRICAO", "")),
+                "texto": str(row.get("TEXTO", ""))
+            })
+        return prompts
+    except Exception as e:
+        # Em caso de erro (ex: credenciais não configuradas), apenas retorna vazio
+        return []
 
 def salvar_prompt_customizado(prompt_dict):
-    prompts = carregar_prompts_customizados()
-    prompts.append(prompt_dict)
-    df = pd.DataFrame(prompts)
-    colunas = ["id", "categoria", "titulo", "descricao", "texto"]
-    for col in colunas:
-        if col not in df.columns:
-            df[col] = ""
-    df = df[colunas]
-    df.to_excel(ARQUIVO_PROMPTS_CUSTOMIZADOS, index=False)
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df_existente = conn.read(ttl=0)
+        
+        # Cria um novo registro mapeando para os cabeçalhos maiúsculos da planilha
+        novo_registro = {
+            "ID": prompt_dict.get("id", ""),
+            "CATEGORIA": prompt_dict.get("categoria", ""),
+            "TITULO": prompt_dict.get("titulo", ""),
+            "DESCRICAO": prompt_dict.get("descricao", ""),
+            "TEXTO": prompt_dict.get("texto", "")
+        }
+        
+        df_novo = pd.DataFrame([novo_registro])
+        df_atualizado = pd.concat([df_existente, df_novo], ignore_index=True)
+        
+        # Atualiza a planilha no Google Drive
+        conn.update(data=df_atualizado)
+    except Exception as e:
+        st.error(f"Erro ao salvar na planilha do Google Sheets: {e}")
 
 
 # =============================================================================
