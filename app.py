@@ -5,13 +5,17 @@ Diretoria Geral de Monitoramento de Contratos de Gestão
 Secretaria Estadual de Saúde
 
 Autor: Anderson Guilherme Barbosa Cavalcante
-Versão: 2.0.0
+Versão: 3.0.0
 =============================================================================
 """
 
 import streamlit as st
 import pyperclip
 from datetime import datetime
+import json
+import os
+import uuid
+import pandas as pd
 
 
 # =============================================================================
@@ -353,6 +357,29 @@ Utilize seções numeradas com subtítulos em negrito. Para a estrutura BPMN tex
     },
 ]
 
+ARQUIVO_PROMPTS_CUSTOMIZADOS = "prompts_customizados.xlsx"
+
+def carregar_prompts_customizados():
+    if os.path.exists(ARQUIVO_PROMPTS_CUSTOMIZADOS):
+        try:
+            df = pd.read_excel(ARQUIVO_PROMPTS_CUSTOMIZADOS)
+            df = df.fillna("")
+            return df.to_dict(orient="records")
+        except Exception:
+            return []
+    return []
+
+def salvar_prompt_customizado(prompt_dict):
+    prompts = carregar_prompts_customizados()
+    prompts.append(prompt_dict)
+    df = pd.DataFrame(prompts)
+    colunas = ["id", "categoria", "titulo", "descricao", "texto"]
+    for col in colunas:
+        if col not in df.columns:
+            df[col] = ""
+    df = df[colunas]
+    df.to_excel(ARQUIVO_PROMPTS_CUSTOMIZADOS, index=False)
+
 
 # =============================================================================
 # SIDEBAR — AVISO DE SEGURANÇA E INFORMAÇÕES
@@ -428,8 +455,10 @@ def renderizar_biblioteca():
     </div>
     """, unsafe_allow_html=True)
 
+    prompts_totais = PROMPTS_BIBLIOTECA + carregar_prompts_customizados()
+
     # Filtro por categoria
-    categorias = ["Todas"] + sorted(list(set(p["categoria"] for p in PROMPTS_BIBLIOTECA)))
+    categorias = ["Todas"] + sorted(list(set(p["categoria"] for p in prompts_totais)))
     categoria_selecionada = st.selectbox(
         "🔍 Filtrar por categoria:",
         categorias,
@@ -438,9 +467,9 @@ def renderizar_biblioteca():
 
     # Filtra os prompts de acordo com a categoria selecionada
     prompts_filtrados = (
-        PROMPTS_BIBLIOTECA
+        prompts_totais
         if categoria_selecionada == "Todas"
-        else [p for p in PROMPTS_BIBLIOTECA if p["categoria"] == categoria_selecionada]
+        else [p for p in prompts_totais if p["categoria"] == categoria_selecionada]
     )
 
     st.markdown(
@@ -628,6 +657,9 @@ def renderizar_construtor():
     with col_btn:
         gerar = st.button("⚡ Gerar Prompt Otimizado", use_container_width=True)
 
+    if 'prompt_gerado' not in st.session_state:
+        st.session_state.prompt_gerado = ""
+
     if gerar:
         # Validação mínima: papel e tarefa são obrigatórios
         campos_vazios = []
@@ -641,8 +673,10 @@ def renderizar_construtor():
                 f"⚠️ Preencha os campos obrigatórios: **{', '.join(campos_vazios)}**"
             )
         else:
-            prompt_gerado = _montar_prompt(papel, tarefa, contexto, formato, restricoes, exemplos)
-            _exibir_resultado(prompt_gerado)
+            st.session_state.prompt_gerado = _montar_prompt(papel, tarefa, contexto, formato, restricoes, exemplos)
+
+    if st.session_state.prompt_gerado:
+        _exibir_resultado(st.session_state.prompt_gerado)
 
 
 def _montar_prompt(
@@ -737,6 +771,35 @@ def _exibir_resultado(prompt_gerado: str):
         f"~{qtd_chars // 4} tokens estimados</p>",
         unsafe_allow_html=True
     )
+
+    st.markdown("<hr style='border:none; border-top:1px solid #D0DCE8; margin: 2rem 0;'>", unsafe_allow_html=True)
+    st.markdown("#### 💾 Salvar na Biblioteca")
+    st.markdown("<p style='font-size:0.9rem; color:#5A7080;'>Salve este prompt para utilizá-lo posteriormente na aba <b>Biblioteca de Prompts</b>.</p>", unsafe_allow_html=True)
+    
+    with st.form("form_salvar_prompt"):
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            novo_titulo = st.text_input("Título do Prompt *", placeholder="Ex: Avaliação de Metas")
+            nova_categoria = st.text_input("Categoria *", placeholder="Ex: Metas Assistenciais")
+        with col_c2:
+            nova_descricao = st.text_area("Descrição (breve)", placeholder="Ex: Avaliação quantitativa de desempenho.")
+        
+        btn_salvar = st.form_submit_button("Salvar Prompt")
+        
+        if btn_salvar:
+            if novo_titulo.strip() and nova_categoria.strip():
+                novo_id = str(uuid.uuid4())
+                novo_prompt = {
+                    "id": novo_id,
+                    "categoria": nova_categoria.strip(),
+                    "titulo": novo_titulo.strip(),
+                    "descricao": nova_descricao.strip(),
+                    "texto": prompt_gerado
+                }
+                salvar_prompt_customizado(novo_prompt)
+                st.success("✅ Prompt salvo com sucesso na Biblioteca!")
+            else:
+                st.error("⚠️ Título e Categoria são obrigatórios para salvar.")
 
 
 # =============================================================================
